@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { graphql } from 'react-relay';
 import { nextQuery } from '../controls/relay';
-import { Properties } from '../shared/Properties';
+import Properties from '../shared/Properties/Properties';
 
 import type { propertiesQuery } from './__generated__/propertiesQuery.graphql';
 

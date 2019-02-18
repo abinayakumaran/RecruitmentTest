@@ -9,6 +9,7 @@ import { Link } from '../../controls/link';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Router from 'next/router'
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import {
   type FragmentRefs,
@@ -54,121 +55,140 @@ type Props = {|
   step ?: string,
 |};
 
-const styles = theme => ({
-  container: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around'
-  },
-  textField: {
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
-  },
-  progress: {
-    margin: theme.spacing.unit * 2,
-  },
-});
-
 export default class Property extends React.Component<Props> {
   state = {
-    livingSurface: 0.0,
-    numberOfRooms: 0.0,
-    landSurface: 0.0,
-    numberOfParkings: 0
+    property: {
+      livingSurface: 0.0,
+      numberOfRooms: 0.0,
+      landSurface: 0.0,
+      numberOfParkings: 0
+    },
+    loading: false,
+    errMsg: ''
   };
 
   handleChange = name => event => {
-    this.setState({
-      [name]: event.target.value,
-    });
+    let property = this.state.property
+    property[name] = event.target.value,
+
+      this.setState({
+        property
+      });
   };
 
   upsertProperty = async (PropertyUpsertMutation) => {
-    await PropertyUpsertMutation.mutate({ property: this.state });
-    setTimeout(() => Router.push('/properties'), 2000)
+    this.setState({ loading: true, errMsg: '' })
+    await PropertyUpsertMutation.mutate({ property: this.state.property }, this.onComplete, this.onError)
+  }
+
+  onComplete = (res) => {
+    Router.push('/properties')
+    this.setState({ loading: false })
+  }
+
+  onError = (err) => {
+    let property = {
+      livingSurface: 0.0,
+      numberOfRooms: 0.0,
+      landSurface: 0.0,
+      numberOfParkings: 0
+    }
+    this.setState({ errMsg: "Invalid Property Details", loading: false, property: property })
   }
 
   render() {
+    const { property, loading, errMsg } = this.state;
     return (
       <>
         <PropertyFragment property={this.props.property}>
           {(/* use { property } to get the query data*/) => (
             <Flex justifyContent="center">
+
               <Paper
                 css={{ maxWidth: 960, marginTop: 16, width: '100%', padding: 16 }}
               >
-                <Typography variant="h6">Property</Typography>
-                <form className={styles.container} noValidate autoComplete="off">
-                  <TextField
-                    id="filled-name"
-                    label="Number of Rooms"
-                    className={styles.textField}
-                    value={this.state.numberOfRooms}
-                    onChange={this.handleChange('numberOfRooms')}
-                    margin="normal"
-                    variant="filled"
-                    type="number"
-                  />
-                  <TextField
-                    id="filled-name"
-                    label="Living Surface"
-                    className={styles.textField}
-                    value={this.state.livingSurface}
-                    onChange={this.handleChange('livingSurface')}
-                    margin="normal"
-                    type="number"
-                    variant="filled"
-                  />
-                  <TextField
-                    id="filled-name"
-                    label="Land Surface"
-                    className={styles.textField}
-                    value={this.state.landSurface}
-                    onChange={this.handleChange('landSurface')}
-                    margin="normal"
-                    type="number"
-                    variant="filled"
-                  />
-                  <TextField
-                    id="filled-name"
-                    label="Number of Parkings"
-                    className={styles.textField}
-                    value={this.state.numberOfParkings}
-                    onChange={this.handleChange('numberOfParkings')}
-                    margin="normal"
-                    type="number"
-                    variant="filled"
-                  />
-                </form>
-                <Flex justifyContent="space-around">
-                  <PropertyUpsertLead>
-                    {PropertyUpsertMutation => {
-                      return (
-                        <>
-                          <Button
-                            onClick={async () => { this.upsertProperty(PropertyUpsertMutation) }}
-                            color="primary"
-                            variant="contained"
-                            css={{ marginTop: 80 }}
-                          >
-                            SUBMIT
+                {!loading ?
+                  <>
+                    <Typography variant="h6">Property</Typography>
+                    <form noValidate autoComplete="off">
+                      <TextField
+                        id="filled-name"
+                        label="Number of Rooms"
+                        style={{ margin: 15 }}
+                        value={property.numberOfRooms}
+                        onChange={this.handleChange('numberOfRooms')}
+                        margin="normal"
+                        variant="filled"
+                        type="number"
+                      />
+                      <TextField
+                        id="filled-name"
+                        style={{ margin: 15 }}
+                        label="Living Surface"
+                        value={property.livingSurface}
+                        onChange={this.handleChange('livingSurface')}
+                        margin="normal"
+                        type="number"
+                        variant="filled"
+                      />
+                      <TextField
+                        id="filled-name"
+                        style={{ margin: 15 }}
+                        label="Land Surface"
+                        value={property.landSurface}
+                        onChange={this.handleChange('landSurface')}
+                        margin="normal"
+                        type="number"
+                        variant="filled"
+                      />
+                      <TextField
+                        id="filled-name"
+                        style={{ margin: 15 }}
+                        label="Number of Parkings"
+                        value={property.numberOfParkings}
+                        onChange={this.handleChange('numberOfParkings')}
+                        margin="normal"
+                        type="number"
+                        variant="filled"
+                      />
+                    </form>
+                    <span style={{ color: 'red' }}>{errMsg}</span>
+                    <Flex justifyContent="space-around">
+                      <PropertyUpsertLead>
+                        {PropertyUpsertMutation => {
+                          return (
+                            <>
+                              <Button
+                                onClick={async () => { this.upsertProperty(PropertyUpsertMutation) }}
+                                color="primary"
+                                variant="contained"
+                                css={{ marginTop: 80 }}
+                              >
+                                SUBMIT
                         </Button>
-                        </>
-                      )
-                    }}
-                  </PropertyUpsertLead>
-                  <Link href={{ pathname: '/properties' }}>
-                    <Button
-                      to="/properties"
-                      color="primary"
-                      variant="contained"
-                      css={{ marginTop: 80 }}
-                    >
-                      Back to properties
+                            </>
+                          )
+                        }}
+                      </PropertyUpsertLead>
+                      <Link href={{ pathname: '/properties' }}>
+                        <Button
+                          to="/properties"
+                          color="primary"
+                          variant="contained"
+                          css={{ marginTop: 80 }}
+                        >
+                          Back to properties
                       </Button>
-                  </Link>
-                </Flex>
+                      </Link>
+                    </Flex>
+                  </>
+                  :
+                  <Flex justifyContent="center">
+                    <CircularProgress color="primary" />
+                  </Flex>
+                }
               </Paper>
+
             </Flex>
           )}
         </PropertyFragment>
