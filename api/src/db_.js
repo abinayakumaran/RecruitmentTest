@@ -12,10 +12,10 @@ import knex from 'knex';
 const db = knex({
   client: 'pg',
   connection: {
-    host: '127.0.0.1',
+    host: '159.89.169.176',
     user: 'postgres',
-    password: 'postgres',
-    database: 'dev'
+    password: 'mysecretpassword',
+    database: 'postgres'
   },
   migrations: {
     tableName: 'migrations',
